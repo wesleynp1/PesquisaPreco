@@ -1,3 +1,5 @@
+import conectorbancoDeDados from "./BancoDeDados";
+
 class controladorProdutos
 {
     constructor()
@@ -10,7 +12,9 @@ class controladorProdutos
             {id:5,nome:"produtoA", loja:"Beco do Ouro", preco:85.36},
             {id:6,nome:"produtoA", loja:"LojaA", preco:98.66},
             {id:7,nome:"produtoA", loja:"LojaA", preco:87.55}
-            ]
+            ];
+
+            let bd = new conectorbancoDeDados();
     }
 
     

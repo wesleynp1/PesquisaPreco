@@ -1,43 +1,77 @@
 import React, { Component } from 'react';
-import {createStackNavigator, Header} from "@react-navigation/stack"
+import { View, Text } from 'react-native';
+
 import { NavigationContainer } from '@react-navigation/native';
+import {createStackNavigator, Header} from "@react-navigation/stack";
+
 import PaginaInicial from './src/paginas/paginaInicial';
 import PaginaRegistroProduto from './src/paginas/paginaRegistro';
-import controladorProdutos from './src/Controladores/ControladorProdutos';
+import conectorbancoDeDados from './src/Controladores/BancoDeDados';
+import controladorProdutos from './src/Controladores/ControladorProdutos';//PENDENTE...
 
 const Stack = createStackNavigator();
-const ctrlProdutos = new controladorProdutos();
 
 class App extends Component
 {
 
-  constructor(props)
+  constructor()
   {
-    super(props);
+    super();
+    
+    this.state = {carregando: true, Produtos:[]};
+    this.acessoBD;
 
-    this.state = {
-      Produtos: ctrlProdutos.Produtos
-    }
+    this.atualizaProdutos = this.atualizaProdutos.bind(this);
   }
 
   render()
   {
-    return(
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown: false}}>
+    if(this.state.carregando)
+    {
+      return (
+        <View style={{justifyContent:'center',flex:1}}>
+          <Text style={{textAlign:'center',fontSize:36}} >CARREGANDO...</Text>
+        </View>
+      );
+    }
+    else
+    {
+      return(
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName='paginaInicial' screenOptions={{headerShown: false}}>
 
-        <Stack.Screen name='paginaInicial'>
-          {({navigation})=>(<PaginaInicial controladorProdutos={this.state.Produtos} irParaPaginaRegistro={()=>{navigation.navigate("paginaRegistro")}}/>)}
-        </Stack.Screen>
-        
-        <Stack.Screen name='paginaRegistro'>
-        {({navigation})=>(<PaginaRegistroProduto irParaPaginaInicial={()=>{navigation.navigate("paginaInicial")}}/>)}
-        </Stack.Screen>
-        
-      </Stack.Navigator>
-    </NavigationContainer>
+          <Stack.Screen name='paginaInicial'>
+            {({navigation})=>
+            (<PaginaInicial controladorProdutos={this.state.Produtos} 
+                            irParaPaginaRegistro={()=>{navigation.navigate("paginaRegistro")}}/>)}
+          </Stack.Screen>
+          
+          <Stack.Screen name='paginaRegistro'>
+          {({navigation})=>
+          (<PaginaRegistroProduto  irParaPaginaInicial={()=>{navigation.navigate("paginaInicial")}} 
+                                   registrarProduto={(novoProduto)=>{this.acessoBD.insereNovoProduto(novoProduto).then(this.atualizaProdutos)}}/>)}
+          </Stack.Screen>
+          
+        </Stack.Navigator>
+      </NavigationContainer>
+      );
+    }
+  }
 
-    );
+  componentDidMount()
+  {
+    this.acessoBD =  new conectorbancoDeDados(this.atualizaProdutos);
+  }
+
+  atualizaProdutos()
+  {
+    if(!this.state.carregando){this.setState({carregando: true, Produtos:[]});}
+    this.acessoBD.CarregaProdutos().then((produtosAtualizados)=>{this.setState({carregando: false, Produtos: produtosAtualizados});});
+  }
+
+  componentWillUnmount()
+  {
+    this.acessoBD.fechaBancoDeDados();
   }
 }
 
